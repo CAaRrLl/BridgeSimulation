@@ -24,22 +24,55 @@ var Host={
        */
       host.mac=mac;
       /*
-      模拟封装成帧
+      模拟封装成帧,并发送到对应网段
        */
-      host.makeFrame=function (content,remoteMac) {
+      host.sendFrame=function (content,remoteMac) {
           var frame={
               mac:host.mac,
               content:content,
               remoteMac:remoteMac
           };
-          return frame;
+          Net.write(conn.interface,frame,'Host');
+          console.log('主机',host.mac,'(连接网段'+conn.interface+')发送帧',frame);
+      };
+      /*
+      接收帧，若帧是发给自己的则收下
+       */
+      host.receiveFrame=function () {
+          /*
+          读取对应网段的数据帧
+           */
+          var frames=Net.read(conn.interface);
+          /*
+          读取失败
+           */
+          if(!frames) return;
+          // console.log('frames',frames);
+          for(var i=0;i<frames.length;i++){
+              console.log('主机',host.mac,'收到帧:',frames[i]);
+              if(frames[i].remoteMac!==host.mac){
+                  console.log('主机',host.mac,'丢弃该帧');
+                  continue;
+              }
+              console.log('主机',host.mac,'接收该帧');
+          }
       };
       /*
       连接到网桥
        */
-      host.linkBridge=function (id,interface) {
+      host.linkBridge=function (id,interface,map) {
+          if(map.type!=='Map') return;
+          if(!map.getConnMap()[id].hasOwnProperty(interface)){
+              console.log('错误！网桥(id',id,')不存在接口',interface);
+              return;
+          }
           conn.id=id;
           conn.interface=interface;
+          /*
+          添加连接信息
+           */
+          map.addLink(id,interface,host.mac);
+          console.log('主机(mac:',host.mac,')连接到网桥(id:',id,')接口:',interface);
       };
       /*
       获取连接信息

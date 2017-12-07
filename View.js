@@ -3,10 +3,8 @@ var View={
      var view={};
      view.container;
      view.init=function () {
-       setTimeout(function () {
-           var body=document.body;
-           view.container=body;
-       },0);
+         var body=document.body;
+         view.container=body;
      };
      return view;
     }
